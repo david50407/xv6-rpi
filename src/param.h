@@ -14,7 +14,7 @@
 #define MAXARG       32  // max exec arguments
 #define LOGSIZE      10  // max data sectors in on-disk log
 
-#define HZ			 10
+#define HZ           10
 
-#define N_CALLSTK	 15
+#define N_CALLSTK    15
 #endif

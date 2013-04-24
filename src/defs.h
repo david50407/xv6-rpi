@@ -26,16 +26,16 @@ typedef uint32  pde_t;
 typedef void (*ISR) (struct trapframe *tf, int n);
 
 // arm.c
-void			set_stk(uint mode, uint addr);
-void			cli (void);
-void			sti (void);
-uint			spsr_usr();
-int				int_enabled();
-void			pushcli(void);
-void			popcli(void);
+void            set_stk(uint mode, uint addr);
+void            cli (void);
+void            sti (void);
+uint            spsr_usr();
+int             int_enabled();
+void            pushcli(void);
+void            popcli(void);
 void            getcallerpcs(void *, uint*);
-void*			get_fp (void);
-void			show_callstk (char *);
+void*           get_fp (void);
+void            show_callstk (char *);
 
 
 // bio.c
@@ -90,7 +90,7 @@ char*           kalloc(void);
 void            kfree(char*);
 void            kinit1(void*, void*);
 void            kinit2(void*, void*);
-void			kmem_init (void);
+void            kmem_init (void);
 
 // log.c
 void            initlog(void);
@@ -101,7 +101,7 @@ void            commit_trans();
 // picirq.c
 void            pic_enable(int, ISR);
 void            pic_init(void*);
-void			pic_dispatch (struct trapframe *tp);
+void            pic_dispatch (struct trapframe *tp);
 
 // pipe.c
 int             pipealloc(struct file**, struct file**);
@@ -153,29 +153,29 @@ int             fetchstr(uint, char**);
 void            syscall(void);
 
 // timer.c
-void			timer_init(int hz);
-extern struct	spinlock tickslock;
+void            timer_init(int hz);
+extern struct   spinlock tickslock;
 
 // trap.c
 extern uint     ticks;
-void			trap_init(void);
-void			dump_trapframe (struct trapframe *tf);
+void            trap_init(void);
+void            dump_trapframe (struct trapframe *tf);
 
 // trap_asm.S
-void			trap_reset(void);
-void			trap_und(void);
-void			trap_swi(void);
-void			trap_abort(void);
-void			trap_na(void);
-void			trap_irq(void);
-void			trap_fiq(void);
+void            trap_reset(void);
+void            trap_und(void);
+void            trap_swi(void);
+void            trap_abort(void);
+void            trap_na(void);
+void            trap_irq(void);
+void            trap_fiq(void);
 
 // uart.c
 void            uart_init(void*);
 void            uartputc(int);
-int				uartgetc(void);
-void			micro_delay(int us);
-void			uart_enable_rx();
+int             uartgetc(void);
+void            micro_delay(int us);
+void            uart_enable_rx();
 
 // vm.c
 int             allocuvm(pde_t*, uint, uint);
@@ -187,6 +187,6 @@ pde_t*          copyuvm(pde_t*, uint);
 void            switchuvm(struct proc*);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
-void*			kpt_alloc(void);
-void			init_vmm (void);
+void*           kpt_alloc(void);
+void            init_vmm (void);
 #endif

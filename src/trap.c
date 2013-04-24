@@ -8,55 +8,55 @@
 // trap routine
 void swi_handler (struct trapframe *r)
 {
-	proc->tf = r;
-	syscall ();
+    proc->tf = r;
+    syscall ();
 }
 
 // trap routine
 void irq_handler (struct trapframe *r)
 {
-	// proc points to the current process. If the kernel is
-	// running scheduler, proc is NULL.
-	if (proc != NULL) {
-		proc->tf = r;
-	}
-	
-	pic_dispatch (r);
+    // proc points to the current process. If the kernel is
+    // running scheduler, proc is NULL.
+    if (proc != NULL) {
+        proc->tf = r;
+    }
+
+    pic_dispatch (r);
 }
 
 // trap routine
 void reset_handler (struct trapframe *r)
 {
-	cprintf ("reset at: %d \n", r->pc);
-	while(1);
+    cprintf ("reset at: %d \n", r->pc);
+    while(1);
 }
 
 // trap routine
 void und_handler (struct trapframe *r)
 {
-	cprintf ("und at: %d \n", r->pc);
-	while(1);
+    cprintf ("und at: %d \n", r->pc);
+    while(1);
 }
 
 // trap routine
 void abort_handler (struct trapframe *r)
 {
-	cprintf ("abort at: %d \n", r->pc);
-	while(1);
+    cprintf ("abort at: %d \n", r->pc);
+    while(1);
 }
 
 // trap routine
 void na_handler (struct trapframe *r)
 {
-	cprintf ("n/a at: %d \n", r->pc);
-	while(1);
+    cprintf ("n/a at: %d \n", r->pc);
+    while(1);
 }
 
 // trap routine
 void fiq_handler (struct trapframe *r)
 {
-	cprintf ("fiq at: %d \n", r->pc);
-	while(1);
+    cprintf ("fiq at: %d \n", r->pc);
+    while(1);
 }
 
 // low-level init code: in real hardware, lower memory is usually mapped
@@ -65,8 +65,8 @@ void trap_init ( )
 {
     volatile uint32 *ram_start;
     char *stk;
-	int i;
-	uint modes[] = {FIQ_MODE, IRQ_MODE, ABT_MODE, UND_MODE};
+    int i;
+    uint modes[] = {FIQ_MODE, IRQ_MODE, ABT_MODE, UND_MODE};
 
     // the opcode of PC relative load (to PC) instruction LDR pc, [pc,...]
     static uint32 const LDR_PCPC = 0xE59FF000U;
@@ -92,34 +92,34 @@ void trap_init ( )
     ram_start[14] = (uint32)trap_irq;
     ram_start[15] = (uint32)trap_fiq;
 
-	// initialize the stacks for different mode
-	for (i = 0; i < sizeof(modes)/sizeof(uint); i++) {
-		stk = kalloc ();
+    // initialize the stacks for different mode
+    for (i = 0; i < sizeof(modes)/sizeof(uint); i++) {
+        stk = kalloc ();
 
-		if (stk == NULL) {
-			panic("failed to alloc memory for irq stack");
-		}
+        if (stk == NULL) {
+            panic("failed to alloc memory for irq stack");
+        }
 
-		set_stk (modes[i], (uint)stk);
-	}
+        set_stk (modes[i], (uint)stk);
+    }
 }
 
 void dump_trapframe (struct trapframe *tf)
 {
-	cprintf ("r14_svc: %d\n", tf->r14_svc);
-	cprintf ("spsr: %x\n", tf->spsr);
-	cprintf ("r0: %d\n", tf->r0);
-	cprintf ("r1: %d\n", tf->r1);
-	cprintf ("r2: %d\n", tf->r2);
-	cprintf ("r3: %d\n", tf->r3);
-	cprintf ("r4: %d\n", tf->r4);
-	cprintf ("r5: %d\n", tf->r5);
-	cprintf ("r6: %d\n", tf->r6);
-	cprintf ("r7: %d\n", tf->r7);
-	cprintf ("r8: %d\n", tf->r8);
-	cprintf ("r9: %d\n", tf->r9);
-	cprintf ("r10: %d\n", tf->r10);
-	cprintf ("r11: %d\n", tf->r11);
-	cprintf ("r12: %d\n", tf->r12);
-	cprintf ("pc: %d\n", tf->pc);
+    cprintf ("r14_svc: %d\n", tf->r14_svc);
+    cprintf ("spsr: %x\n", tf->spsr);
+    cprintf ("r0: %d\n", tf->r0);
+    cprintf ("r1: %d\n", tf->r1);
+    cprintf ("r2: %d\n", tf->r2);
+    cprintf ("r3: %d\n", tf->r3);
+    cprintf ("r4: %d\n", tf->r4);
+    cprintf ("r5: %d\n", tf->r5);
+    cprintf ("r6: %d\n", tf->r6);
+    cprintf ("r7: %d\n", tf->r7);
+    cprintf ("r8: %d\n", tf->r8);
+    cprintf ("r9: %d\n", tf->r9);
+    cprintf ("r10: %d\n", tf->r10);
+    cprintf ("r11: %d\n", tf->r11);
+    cprintf ("r12: %d\n", tf->r12);
+    cprintf ("pc: %d\n", tf->pc);
 }

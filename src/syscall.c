@@ -16,8 +16,8 @@ int fetchint(uint addr, int *ip)
 {
     if(addr >= proc->sz || addr+4 > proc->sz) {
         return -1;
-	}
-	
+    }
+
     *ip = *(int*)(addr);
     return 0;
 }
@@ -31,31 +31,31 @@ int fetchstr(uint addr, char **pp)
 
     if(addr >= proc->sz) {
         return -1;
-	}
-	
+    }
+
     *pp = (char*)addr;
     ep = (char*)proc->sz;
-	
+
     for(s = *pp; s < ep; s++) {
         if(*s == 0) {
             return s - *pp;
-		}
-	}
-	
+        }
+    }
+
     return -1;
 }
 
 // Fetch the nth (starting from 0) 32-bit system call argument.
 // In our ABI, r0 contains system call index, r1-r4 contain parameters.
-// now we support system calls with at most 4 parameters. 
+// now we support system calls with at most 4 parameters.
 int argint(int n, int *ip)
 {
-	if (n > 3) {
-		panic ("too many system call parameters\n");
-	}
+    if (n > 3) {
+        panic ("too many system call parameters\n");
+    }
 
-	*ip = *(&proc->tf->r1 + n);
-	
+    *ip = *(&proc->tf->r1 + n);
+
     return 0;
 }
 
@@ -65,15 +65,15 @@ int argint(int n, int *ip)
 int argptr(int n, char **pp, int size)
 {
     int i;
-    
+
     if(argint(n, &i) < 0) {
         return -1;
-	}
-	
+    }
+
     if((uint)i >= proc->sz || (uint)i+size > proc->sz) {
         return -1;
-	}
-	
+    }
+
     *pp = (char*)i;
     return 0;
 }
@@ -85,11 +85,11 @@ int argptr(int n, char **pp, int size)
 int argstr(int n, char **pp)
 {
     int addr;
-	
+
     if(argint(n, &addr) < 0) {
         return -1;
-	}
-	
+    }
+
     return fetchstr(addr, pp);
 }
 
@@ -116,47 +116,47 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 
 static int (*syscalls[])(void) = {
-    [SYS_fork]    sys_fork,
-    [SYS_exit]    sys_exit,
-    [SYS_wait]    sys_wait,
-    [SYS_pipe]    sys_pipe,
-    [SYS_read]    sys_read,
-    [SYS_kill]    sys_kill,
-    [SYS_exec]    sys_exec,
-    [SYS_fstat]   sys_fstat,
-    [SYS_chdir]   sys_chdir,
-    [SYS_dup]     sys_dup,
-    [SYS_getpid]  sys_getpid,
-    [SYS_sbrk]    sys_sbrk,
-    [SYS_sleep]   sys_sleep,
-    [SYS_uptime]  sys_uptime,
-    [SYS_open]    sys_open,
-    [SYS_write]   sys_write,
-    [SYS_mknod]   sys_mknod,
-    [SYS_unlink]  sys_unlink,
-    [SYS_link]    sys_link,
-    [SYS_mkdir]   sys_mkdir,
-    [SYS_close]   sys_close,
+        [SYS_fork]    sys_fork,
+        [SYS_exit]    sys_exit,
+        [SYS_wait]    sys_wait,
+        [SYS_pipe]    sys_pipe,
+        [SYS_read]    sys_read,
+        [SYS_kill]    sys_kill,
+        [SYS_exec]    sys_exec,
+        [SYS_fstat]   sys_fstat,
+        [SYS_chdir]   sys_chdir,
+        [SYS_dup]     sys_dup,
+        [SYS_getpid]  sys_getpid,
+        [SYS_sbrk]    sys_sbrk,
+        [SYS_sleep]   sys_sleep,
+        [SYS_uptime]  sys_uptime,
+        [SYS_open]    sys_open,
+        [SYS_write]   sys_write,
+        [SYS_mknod]   sys_mknod,
+        [SYS_unlink]  sys_unlink,
+        [SYS_link]    sys_link,
+        [SYS_mkdir]   sys_mkdir,
+        [SYS_close]   sys_close,
 };
 
 void syscall(void)
 {
     int num;
-	int ret;
+    int ret;
 
     num = proc->tf->r0;
-	
-	//cprintf ("syscall(%d) from %s(%d)\n", num, proc->name, proc->pid);
+
+    //cprintf ("syscall(%d) from %s(%d)\n", num, proc->name, proc->pid);
 
     if((num > 0) && (num <= NELEM(syscalls)) && syscalls[num]) {
         ret = syscalls[num]();
 
-		// in ARM, parameters to main (argc, argv) are passed in r0 and r1
-		// do not set the return value if it is SYS_exec (the user program
-		// anyway does not expect us to return anything).
-		if (num != SYS_exec) {
-			proc->tf->r0 = ret;
-		}
+        // in ARM, parameters to main (argc, argv) are passed in r0 and r1
+        // do not set the return value if it is SYS_exec (the user program
+        // anyway does not expect us to return anything).
+        if (num != SYS_exec) {
+            proc->tf->r0 = ret;
+        }
     } else {
         cprintf("%d %s: unknown sys call %d\n", proc->pid, proc->name, num);
         proc->tf->r0 = -1;

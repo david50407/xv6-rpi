@@ -13,10 +13,10 @@
 
 // File system super block
 struct superblock {
-    uint size;         // Size of file system image (blocks)
-    uint nblocks;      // Number of data blocks
-    uint ninodes;      // Number of inodes.
-    uint nlog;         // Number of log blocks
+    uint    size;           // Size of file system image (blocks)
+    uint    nblocks;        // Number of data blocks
+    uint    ninodes;        // Number of inodes.
+    uint    nlog;           // Number of log blocks
 };
 
 #define NDIRECT 12
@@ -25,12 +25,12 @@ struct superblock {
 
 // On-disk inode structure
 struct dinode {
-    short type;           // File type
-    short major;          // Major device number (T_DEV only)
-    short minor;          // Minor device number (T_DEV only)
-    short nlink;          // Number of links to inode in file system
-    uint size;            // Size of file (bytes)
-    uint addrs[NDIRECT+1];   // Data block addresses
+    short   type;           // File type
+    short   major;          // Major device number (T_DEV only)
+    short   minor;          // Minor device number (T_DEV only)
+    short   nlink;          // Number of links to inode in file system
+    uint    size;           // Size of file (bytes)
+    uint    addrs[NDIRECT+1]; // Data block addresses
 };
 
 // Inodes per block.
@@ -49,7 +49,7 @@ struct dinode {
 #define DIRSIZ 14
 
 struct dirent {
-    ushort inum;
-    char name[DIRSIZ];
+    ushort  inum;
+    char    name[DIRSIZ];
 };
 

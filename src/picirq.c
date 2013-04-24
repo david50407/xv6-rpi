@@ -37,60 +37,60 @@ static ISR isrs[NUM_INTSRC];
 
 static void default_isr (struct trapframe *tf, int n)
 {
-	cprintf ("unhandled interrupt: %d\n", n);
+    cprintf ("unhandled interrupt: %d\n", n);
 }
 
 // initialize the PL190 VIC
 void pic_init (void * base)
 {
-	int i;
+    int i;
 
-	// set the base for the controller and disable all interrupts
-	vic_base = base;
-	vic_base[VIC_INTCLEAR] = 0xFFFFFFFF;
+    // set the base for the controller and disable all interrupts
+    vic_base = base;
+    vic_base[VIC_INTCLEAR] = 0xFFFFFFFF;
 
-	for (i = 0; i < NUM_INTSRC; i++) {
-		isrs[i] = default_isr;
-	}
+    for (i = 0; i < NUM_INTSRC; i++) {
+        isrs[i] = default_isr;
+    }
 }
 
 // enable an interrupt (with the ISR)
 void pic_enable (int n, ISR isr)
 {
-	if ((n<0) || (n >= NUM_INTSRC)) {
-		panic ("invalid interrupt source");
-	}
+    if ((n<0) || (n >= NUM_INTSRC)) {
+        panic ("invalid interrupt source");
+    }
 
-	// write 1 bit enable the interrupt, 0 bit has no effect
-	isrs[n] = isr;
-	vic_base[VIC_INTENABLE] = (1 << n);
+    // write 1 bit enable the interrupt, 0 bit has no effect
+    isrs[n] = isr;
+    vic_base[VIC_INTENABLE] = (1 << n);
 }
 
 // disable an interrupt
 void pic_disable (int n)
 {
-	if ((n<0) || (n >= NUM_INTSRC)) {
-		panic ("invalid interrupt source");
-	}
+    if ((n<0) || (n >= NUM_INTSRC)) {
+        panic ("invalid interrupt source");
+    }
 
-	vic_base[VIC_INTCLEAR] = (1 << n);
-	isrs[n] = default_isr;
+    vic_base[VIC_INTCLEAR] = (1 << n);
+    isrs[n] = default_isr;
 }
 
 // dispatch the interrupt
 void pic_dispatch (struct trapframe *tp)
 {
-	uint intstatus;
-	int		i;
+    uint intstatus;
+    int		i;
 
-	intstatus = vic_base[VIC_IRQSTATUS];
+    intstatus = vic_base[VIC_IRQSTATUS];
 
-	for (i = 0; i < NUM_INTSRC; i++) {
-		if (intstatus & (1<<i)) {
-			isrs[i](tp, i);
-		}
-	}
+    for (i = 0; i < NUM_INTSRC; i++) {
+        if (intstatus & (1<<i)) {
+            isrs[i](tp, i);
+        }
+    }
 
-	intstatus = vic_base[VIC_IRQSTATUS];
+    intstatus = vic_base[VIC_IRQSTATUS];
 }
 

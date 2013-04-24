@@ -25,7 +25,7 @@ struct {
 
 void kmem_init (void)
 {
-	initlock(&kmem.lock, "kmem");
+    initlock(&kmem.lock, "kmem");
     kmem.use_lock = 0;
 }
 
@@ -49,11 +49,11 @@ void freerange(void *vstart, void *vend)
 {
     char *p;
 
-	p = (char*)PG_UP((uint)vstart);
+    p = (char*)PG_UP((uint)vstart);
 
-	for(; p + PG_SIZE <= (char*)vend; p += PG_SIZE) {
+    for(; p + PG_SIZE <= (char*)vend; p += PG_SIZE) {
         kfree(p);
-	}
+    }
 }
 
 //PAGEBREAK: 21
@@ -65,40 +65,40 @@ void kfree(char *v)
 {
     struct run *r;
 
-	if((uint)v % PG_SIZE) {
-		cprintf("kfree1(0x%x)\n", v);
+    if((uint)v % PG_SIZE) {
+        cprintf("kfree1(0x%x)\n", v);
         panic("kfree");
-	}
+    }
 
-	if(v < end) {
-		cprintf("kfree2(0x%x)\n", v);
+    if(v < end) {
+        cprintf("kfree2(0x%x)\n", v);
         panic("kfree");
-	}
+    }
 
-	if(v2p(v) >= PHYSTOP) {
-		cprintf("kfree3(0x%x)\n", v);
+    if(v2p(v) >= PHYSTOP) {
+        cprintf("kfree3(0x%x)\n", v);
         panic("kfree");
-	}
+    }
 
     if((uint)v % PG_SIZE || v < end || v2p(v) >= PHYSTOP) {
-		cprintf("kfree(0x%x)\n", v);
+        cprintf("kfree(0x%x)\n", v);
         panic("kfree");
-	}
-    
+    }
+
     // Fill with junk to catch dangling refs.
-	//memset(v, 0x00, PG_SIZE);
+    //memset(v, 0x00, PG_SIZE);
 
     if(kmem.use_lock) {
         acquire(&kmem.lock);
-	}
-	
+    }
+
     r = (struct run*)v;
     r->next = kmem.freelist;
     kmem.freelist = r;
-	
+
     if(kmem.use_lock) {
         release(&kmem.lock);
-	}
+    }
 }
 
 // Allocate one 4096-byte page of physical memory.
@@ -107,20 +107,20 @@ void kfree(char *v)
 char* kalloc(void)
 {
     struct run *r;
-    
+
     if(kmem.use_lock) {
         acquire(&kmem.lock);
-	}
-	
+    }
+
     r = kmem.freelist;
 
     if(r) {
         kmem.freelist = r->next;
-	}
-	
+    }
+
     if(kmem.use_lock) {
         release(&kmem.lock);
-	}
-	
+    }
+
     return (char*)r;
 }

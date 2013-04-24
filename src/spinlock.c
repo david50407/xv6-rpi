@@ -27,22 +27,22 @@ void initlock(struct spinlock *lk, char *name)
 void acquire(struct spinlock *lk)
 {
     pushcli();		// disable interrupts to avoid deadlock.
-	lk->locked = 1;	// set the lock status to make the kernel happy
-	
+    lk->locked = 1;	// set the lock status to make the kernel happy
+
 #if 0
-	if(holding(lk))
+    if(holding(lk))
         panic("acquire");
-    
+
     // The xchg is atomic.
     // It also serializes, so that reads after acquire are not
     // reordered before it.
     while(xchg(&lk->locked, 1) != 0)
         ;
-    
+
     // Record info about lock acquisition for debugging.
     lk->cpu = cpu;
     getcallerpcs(get_fp(), lk->pcs);
-	
+
 #endif
 }
 
@@ -50,12 +50,12 @@ void acquire(struct spinlock *lk)
 void release(struct spinlock *lk)
 {
 #if 0
-	if(!holding(lk))
+    if(!holding(lk))
         panic("release");
-    
+
     lk->pcs[0] = 0;
     lk->cpu = 0;
-    
+
     // The xchg serializes, so that reads before release are
     // not reordered after it.  The 1996 PentiumPro manual (Volume 3,
     // 7.2) says reads can be carried out speculatively and in
@@ -68,7 +68,7 @@ void release(struct spinlock *lk)
     xchg(&lk->locked, 0);
 #endif
 
-	lk->locked = 0; // set the lock state to keep the kernel happy
+    lk->locked = 0; // set the lock state to keep the kernel happy
     popcli();
 }
 

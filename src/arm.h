@@ -21,8 +21,8 @@
 // and switches to a new process (including user-space banked registers)
 #ifndef __ASSEMBLER__
 struct trapframe {
-	uint	sp_usr;		// user mode sp
-	uint	lr_usr;		// user mode lr
+    uint    sp_usr;     // user mode sp
+    uint    lr_usr;     // user mode lr
     uint    r14_svc;    // r14_svc (r14_svc == pc if SWI)
     uint    spsr;
     uint    r0;
@@ -44,10 +44,10 @@ struct trapframe {
 
 // cpsr/spsr bits
 #define NO_INT      0xc0
-#define DIS_INT		0x80
+#define DIS_INT     0x80
 
 // ARM has 7 modes and banked registers
-#define MODE_MASK	0x1f
+#define MODE_MASK   0x1f
 #define USR_MODE    0x10
 #define FIQ_MODE    0x11
 #define IRQ_MODE    0x12
