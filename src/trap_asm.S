@@ -21,8 +21,8 @@ trap_swi:
     MRS     r2, spsr            // copy spsr to r2
     STMFD   r13!, {r2}          // save r2(spsr) to the stack
     STMFD   r13!, {r14}         // save r14 again to have one uniform trapframe
-	STMFD	r13, {sp, lr}^		// save user mode sp and lr
-	SUB		r13, r13, #8
+    STMFD   r13, {sp, lr}^      // save user mode sp and lr
+    SUB     r13, r13, #8
 
     # call traps (trapframe *fp)
     MOV     r0, r13             // copy r13_svc to r0
@@ -30,8 +30,8 @@ trap_swi:
 
     # restore states
 trapret:
-	LDMFD	r13, {sp, lr}^		// restore user mode sp and lr
-	ADD		r13, r13, #8
+    LDMFD   r13, {sp, lr}^      // restore user mode sp and lr
+    ADD     r13, r13, #8
     LDMFD   r13!, {r14}         // restore r14
     LDMFD   r13!, {r2}          // restore spsr
     MSR     spsr_cxsf, r2
@@ -63,17 +63,17 @@ trap_irq:
     LDMFD   r0, {r3-r5}             // copy r0-r2 over from irq stack
     STMFD   r13!, {r3-r5}
     STMFD   r13!, {r1}              // save spsr
-    STMFD   r13!, {lr}             // save r14_svc
+    STMFD   r13!, {lr}              // save r14_svc
 
-	STMFD	r13, {sp, lr}^			// save user mode sp and lr
-	SUB		r13, r13, #8
+    STMFD   r13, {sp, lr}^          // save user mode sp and lr
+    SUB     r13, r13, #8
 
     # get the parameters, then call the handler
     MOV     r0, r13                 // points to
     BL      irq_handler
 
-	# restore the previous status
-    B		trapret
+    # restore the previous status
+    B   trapret
 
 # handle reset/undefine instruction/abort/not-assigned/fiq
 # these handler does not allow nested handling
