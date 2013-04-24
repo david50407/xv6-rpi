@@ -1,0 +1,49 @@
+include ../makefile.inc
+
+CFLAGS += -iquote ../
+ASFLAGS += -I ../
+ULIB = ulib.o usys.o printf.o umalloc.o
+
+UPROGS=\
+	_cat\
+	_echo\
+	_grep\
+	_init\
+	_kill\
+	_ln\
+	_ls\
+	_mkdir\
+	_rm\
+	_sh\
+	_stressfs\
+	_usertests\
+	_wc\
+	_zombie\
+
+
+all: fs.img
+
+mkfs: mkfs.c
+	gcc -Werror -Wall -iquote ../ -o mkfs mkfs.c
+
+_%: %.o $(ULIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^  -L ../ -lgcc
+	$(OBJDUMP) -S $@ > $*.asm
+	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
+
+_forktest: forktest.o $(ULIB)
+	# forktest has less library code linked in - needs to be small
+	# in order to be able to max out the proc table.
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
+	$(OBJDUMP) -S _forktest > forktest.asm
+
+fs.img: mkfs  $(UPROGS)
+	./mkfs fs.img  $(UPROGS) UNIX
+	$(OBJDUMP) -S usys.o > usys.asm
+
+clean: 
+	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
+	*.o *.d *.asm *.sym vectors.S bootblock entryother \
+	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs mkfs \
+	.gdbinit \
+	$(UPROGS)
