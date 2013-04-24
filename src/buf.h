@@ -2,13 +2,13 @@
 #define INCLUDE_BUF_H
 
 struct buf {
-    int    flags;
-    uint   dev;
-    uint   sector;
+    int        flags;
+    uint       dev;
+    uint       sector;
     struct buf *prev;  // LRU cache list
     struct buf *next;
     struct buf *qnext; // disk queue
-    uchar  data[512];
+    uchar      data[512];
 };
 
 #define B_BUSY  0x1  // buffer is locked by some process
