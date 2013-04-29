@@ -2,6 +2,9 @@
 #ifndef MMU_INCLUDE
 #define MMU_INCLUDE
 
+// align_up/down: al must be of power of 2
+#define align_up(sz, al) (((uint)(sz)+ (uint)(al)-1) & ~((uint)(al)-1))
+#define align_dn(sz, al) ((uint)(sz) & ~((uint)(al)-1))
 //
 // Since ARMv6, you may use two page tables, one for kernel pages (TTBR1),
 // and one for user pages (TTBR0). We use this architecture. Memory address
@@ -32,34 +35,28 @@
 #define UPDE_TYPE   0x01    // use "coarse page table" for user page directory
 #define PTE_TYPE    0x02    // executable user page(subpage disable)
 
-#define PDE_SHIFT   20      // shift how many bits to get PDE index
-#define PDE_MASK    0xFFFFF // offset for page directory entries
-#define PD_SZ       (1 << PDE_SHIFT)
-#define PD_UP(sz)   (((sz) + PD_SZ -1) & ~(PD_SZ -1))
+// 1st-level or large (1MB) page directory (always maps 1MB memory)
+#define PDE_SHIFT   20                      // shift how many bits to get PDE index
+#define PDE_SZ      (1 << PDE_SHIFT)
+#define PDE_MASK    (PDE_SZ - 1)            // offset for page directory entries
+#define PDE_IDX(v)  ((uint)(v) >> PDE_SHIFT) // index for page table entry
 
-#define KPD_IDX(v)  ((uint)(v) >> PDE_SHIFT) // index for kernel page table entry
-                        // kernel page directory is a 16KB big table (4096 entries)
+// 2nd-level page table
+#define PTE_SHIFT   12                  // shift how many bits to get PTE index
+#define PTE_IDX(v)  (((uint)(v) >> PTE_SHIFT) & (NUM_PTE - 1))
+#define PTE_SZ      (1 << PTE_SHIFT)
+#define PTE_ADDR(v) align_dn (v, PTE_SZ)
+#define PTE_AP(pte) (((pte) >> 4) & 0x03)
 
-// the user space can have 256MB memory at maximum
-#define UADDR_BITS  28  // the maximum user-application memory, 256MB
+// size of two-level page tables
+#define UADDR_BITS  28                  // maximum user-application memory, 256MB
 #define UADDR_SZ    (1 << UADDR_BITS)   // maximum user address space size
 
-#define NPD_ENTRIES (1 << (UADDR_BITS - PDE_SHIFT)) // how many entries in a PD
-#define PD_IDX(v)   (KPD_IDX(v) & (NPD_ENTRIES - 1))
+// must have NUM_UPDE == NUM_PTE
+#define NUM_UPDE    (1 << (UADDR_BITS - PDE_SHIFT)) // # of PDE for user space
+#define NUM_PTE     (1 << (PDE_SHIFT - PTE_SHIFT))  // how many PTE in a PT
 
-// each coarse page table is 1KB in size (256 entries) to map 1MB memory
-#define PTE_SHIFT   12                              // shift how many bits to get PTE index
-#define NPT_ENTRIES (1 << (PDE_SHIFT - PTE_SHIFT))  // how many entries in a PT
-#define PT_IDX(v)   (((uint)(v) >> PTE_SHIFT) & (NPT_ENTRIES -1))
-#define PT_SZ       (NPT_ENTRIES << 2)              // user page table size (1K)
-#define PT_ADDR(v)  ((uint)(v) & ~(PT_SZ -1))       // physical address of the PT
-
-#define PG_SIZE     (1 << PTE_SHIFT)
-#define PTE_ADDR(v) ((uint)(v) & ~(PG_SIZE -1))
-
-#define PG_UP(sz)   (((sz)+PG_SIZE-1) & ~(PG_SIZE-1))
-#define PG_DOWN(a)  (((a)) & ~(PG_SIZE-1))
-
-#define PTE_AP(pte) (((pte) >> 4) & 0x03)
+#define PT_SZ       (NUM_PTE << 2)                  // user page table size (1K)
+#define PT_ADDR(v)  align_dn(v, PT_SZ)              // physical address of the PT
 
 #endif

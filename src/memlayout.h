@@ -1,9 +1,12 @@
 // Memory layout
 
 // Key addresses for address space layout (see kmap in vm.c for layout)
-#define EXTMEM	  0x20000
-#define KERNBASE  0x80000000         // First kernel virtual address
-#define KERNLINK  (KERNBASE+EXTMEM)  // Address where kernel is linked
+#define EXTMEM	  		0x20000
+#define KERNBASE  		0x80000000         // First kernel virtual address
+#define KERNLINK  		(KERNBASE+EXTMEM)  // Address where kernel is linked
+
+// we first map 1MB low memory containing kernel code.
+#define INIT_KERNMAP 	0x100000
 
 #ifndef __ASSEMBLER__
 

@@ -78,7 +78,7 @@ void set_bootpgtbl (uint32 virt, uint32 phy, uint len, int dev_mem )
         }
 
         // use different page table for user/kernel space
-        if (virt < NPD_ENTRIES) {
+        if (virt < NUM_UPDE) {
             user_pgtbl[virt] = pde;
         } else {
             kernel_pgtbl[virt] = pde;
@@ -143,7 +143,7 @@ void load_pgtlb (uint32* kern_pgtbl, uint32* user_pgtbl)
     asm("MRC p15, 0, %[r], c1, c0, 0": [r]"=r" (val)::);
 
     val |= 0x80300D; // enable MMU, cache, write buffer, high vector tbl,
-    // disable subpage
+                     // disable subpage
     asm("MCR p15, 0, %[r], c1, c0, 0": :[r]"r" (val):);
 
     _flush_all();
@@ -165,19 +165,29 @@ void clear_bss (void)
 
 void start (void)
 {
+	uint32  vectbl;
     _puts("starting xv6 for ARM...\n");
 
-    set_bootpgtbl(0, 0, PHYSTOP, 0);
-    set_bootpgtbl(KERNBASE, 0, PHYSTOP, 0);
+    // double map the low memory, required to enable paging
+    // we do not map all the physical memory
+    set_bootpgtbl(0, 0, INIT_KERNMAP, 0);
+    set_bootpgtbl(KERNBASE, 0, INIT_KERNMAP, 0);
+
+    // vector table is in the middle of first 1MB (0xF000)
+    vectbl = P2V_WO (VEC_TBL & PDE_MASK);
+
+    if (vectbl <= (uint)&end) {
+        cprintf ("error: vector table overlaps kernel\n");
+    }
+
     set_bootpgtbl(VEC_TBL, 0, 1 << PDE_SHIFT, 0);
-    set_bootpgtbl(DEVBASE, DEVBASE, DEV_MEM_SZ, 1);
     set_bootpgtbl(KERNBASE+DEVBASE, DEVBASE, DEV_MEM_SZ, 1);
 
     load_pgtlb (kernel_pgtbl, user_pgtbl);
     jump_stack ();
-
+    
     // We can now call normal kernel functions at high memory
     clear_bss ();
-
+    
     kmain ();
 }

@@ -128,14 +128,14 @@ void userinit(void)
 
     inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
 
-    p->sz = PG_SIZE;
+    p->sz = PTE_SZ;
 
     // craft the trapframe as if
     memset(p->tf, 0, sizeof(*p->tf));
 
     p->tf->r14_svc = (uint)error_init;
     p->tf->spsr = spsr_usr ();
-    p->tf->sp_usr = PG_SIZE;	// set the user stack
+    p->tf->sp_usr = PTE_SZ;	// set the user stack
     p->tf->lr_usr = 0;
 
     // set the user pc. The actual pc loaded into r15_usr is in

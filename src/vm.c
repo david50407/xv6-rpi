@@ -14,7 +14,7 @@ pde_t *kpgdir;  // for use in scheduler()
 // Xv6 can only allocate memory in 4KB blocks. This is fine
 // for x86. ARM's page table and page directory (for 28-bit
 // user address) have a size of 1KB. We use a simple allocation
-// scheme to manage it. 
+// scheme to manage it.
 struct run {
     struct run *next;
 };
@@ -30,17 +30,30 @@ void init_vmm (void)
     kpt_mem.freelist = NULL;
 }
 
-static void kpt_free (char *v)
+static void _kpt_free (char *v)
 {
     struct run *r;
-
-    acquire(&kpt_mem.lock);
 
     r = (struct run*) v;
     r->next = kpt_mem.freelist;
     kpt_mem.freelist = r;
+}
 
+
+static void kpt_free (char *v)
+{
+    acquire(&kpt_mem.lock);
+    _kpt_free (v);
     release(&kpt_mem.lock);
+}
+
+// add some memory used for page tables (initialization code)
+void kpt_freerange (uint32 low, uint32 hi)
+{
+    while (low < hi) {
+        _kpt_free ((char*)low);
+        low += PT_SZ;
+    }
 }
 
 void* kpt_alloc (void)
@@ -84,7 +97,7 @@ static pte_t* walkpgdir (pde_t *pgdir, const void *va, int alloc)
     pte_t *pgtab;
 
     // pgdir points to the page directory, get the page direcotry entry (pde)
-    pde = &pgdir[PD_IDX(va)];
+    pde = &pgdir[PDE_IDX(va)];
 
     if (*pde & PE_TYPES) {
         pgtab = (pte_t*) p2v(PT_ADDR(*pde));
@@ -103,7 +116,7 @@ static pte_t* walkpgdir (pde_t *pgdir, const void *va, int alloc)
         *pde = v2p(pgtab) | UPDE_TYPE;
     }
 
-    return &pgtab[PT_IDX(va)];
+    return &pgtab[PTE_IDX(va)];
 }
 
 // Create PTEs for virtual addresses starting at va that refer to
@@ -114,8 +127,8 @@ static int mappages (pde_t *pgdir, void *va, uint size, uint pa, int ap)
     char *a, *last;
     pte_t *pte;
 
-    a = (char*) PG_DOWN((uint)va);
-    last = (char*) PG_DOWN(((uint)va) + size - 1);
+    a = (char*) align_dn(va, PTE_SZ);
+    last = (char*) align_dn((uint)va + size - 1, PTE_SZ);
 
     for (;;) {
         if ((pte = walkpgdir(pgdir, a, 1)) == 0) {
@@ -132,8 +145,8 @@ static int mappages (pde_t *pgdir, void *va, uint size, uint pa, int ap)
             break;
         }
 
-        a += PG_SIZE;
-        pa += PG_SIZE;
+        a += PTE_SZ;
+        pa += PTE_SZ;
     }
 
     return 0;
@@ -144,6 +157,10 @@ static void flush_tlb (void)
 {
     uint val = 0;
     asm("MCR p15, 0, %[r], c8, c7, 0" : :[r]"r" (val):);
+
+    // invalid entire data and instruction cache
+    asm ("MCR p15,0,%[r],c7,c10,0": :[r]"r" (val):);
+    asm ("MCR p15,0,%[r],c7,c11,0": :[r]"r" (val):);
 }
 
 // Switch to the user page table (TTBR0)
@@ -170,13 +187,13 @@ void inituvm (pde_t *pgdir, char *init, uint sz)
 {
     char *mem;
 
-    if (sz >= PG_SIZE) {
+    if (sz >= PTE_SZ) {
         panic("inituvm: more than a page");
     }
 
     mem = kalloc();
-    memset(mem, 0, PG_SIZE);
-    mappages(pgdir, 0, PG_SIZE, v2p(mem), AP_KU);
+    memset(mem, 0, PTE_SZ);
+    mappages(pgdir, 0, PTE_SZ, v2p(mem), AP_KU);
     memmove(mem, init, sz);
 }
 
@@ -187,21 +204,21 @@ int loaduvm (pde_t *pgdir, char *addr, struct inode *ip, uint offset, uint sz)
     uint i, pa, n;
     pte_t *pte;
 
-    if ((uint) addr % PG_SIZE != 0) {
+    if ((uint) addr % PTE_SZ != 0) {
         panic("loaduvm: addr must be page aligned");
     }
 
-    for (i = 0; i < sz; i += PG_SIZE) {
+    for (i = 0; i < sz; i += PTE_SZ) {
         if ((pte = walkpgdir(pgdir, addr + i, 0)) == 0) {
             panic("loaduvm: address should exist");
         }
 
         pa = PTE_ADDR(*pte);
 
-        if (sz - i < PG_SIZE) {
+        if (sz - i < PTE_SZ) {
             n = sz - i;
         } else {
-            n = PG_SIZE;
+            n = PTE_SZ;
         }
 
         if (readi(ip, p2v(pa), offset + i, n) != n) {
@@ -227,9 +244,9 @@ int allocuvm (pde_t *pgdir, uint oldsz, uint newsz)
         return oldsz;
     }
 
-    a = PG_UP(oldsz);
+    a = align_up(oldsz, PTE_SZ);
 
-    for (; a < newsz; a += PG_SIZE) {
+    for (; a < newsz; a += PTE_SZ) {
         mem = kalloc();
 
         if (mem == 0) {
@@ -238,8 +255,8 @@ int allocuvm (pde_t *pgdir, uint oldsz, uint newsz)
             return 0;
         }
 
-        memset(mem, 0, PG_SIZE);
-        mappages(pgdir, (char*) a, PG_SIZE, v2p(mem), AP_KU);
+        memset(mem, 0, PTE_SZ);
+        mappages(pgdir, (char*) a, PTE_SZ, v2p(mem), AP_KU);
     }
 
     return newsz;
@@ -259,13 +276,13 @@ int deallocuvm (pde_t *pgdir, uint oldsz, uint newsz)
         return oldsz;
     }
 
-    for (a = PG_UP(newsz); a < oldsz; a += PG_SIZE) {
+    for (a = align_up(newsz, PTE_SZ); a < oldsz; a += PTE_SZ) {
         pte = walkpgdir(pgdir, (char*) a, 0);
 
         if (!pte) {
             // pte == 0 --> no page table for this entry
             // round it up to the next page directory
-            a = PD_UP (a);
+            a = align_up (a, PDE_SZ);
 
         } else if ((*pte & PE_TYPES) != 0) {
             pa = PTE_ADDR(*pte);
@@ -297,7 +314,7 @@ void freevm (pde_t *pgdir)
     deallocuvm(pgdir, UADDR_SZ, 0);
 
     // release the page tables
-    for (i = 0; i < NPD_ENTRIES; i++) {
+    for (i = 0; i < NUM_UPDE; i++) {
         if (pgdir[i] & PE_TYPES) {
             v = p2v(PT_ADDR(pgdir[i]));
             kpt_free(v);
@@ -338,7 +355,7 @@ pde_t* copyuvm (pde_t *pgdir, uint sz)
     }
 
     // copy the whole address space over (no COW)
-    for (i = 0; i < sz; i += PG_SIZE) {
+    for (i = 0; i < sz; i += PTE_SZ) {
         if ((pte = walkpgdir(pgdir, (void *) i, 0)) == 0) {
             panic("copyuvm: pte should exist");
         }
@@ -354,15 +371,15 @@ pde_t* copyuvm (pde_t *pgdir, uint sz)
             goto bad;
         }
 
-        memmove(mem, (char*) p2v(pa), PG_SIZE);
+        memmove(mem, (char*) p2v(pa), PTE_SZ);
 
-        if (mappages(d, (void*) i, PG_SIZE, v2p(mem), ap) < 0) {
+        if (mappages(d, (void*) i, PTE_SZ, v2p(mem), ap) < 0) {
             goto bad;
         }
     }
     return d;
 
-    bad: freevm(d);
+bad: freevm(d);
     return 0;
 }
 
@@ -398,14 +415,14 @@ int copyout (pde_t *pgdir, uint va, void *p, uint len)
     buf = (char*) p;
 
     while (len > 0) {
-        va0 = (uint) PG_DOWN(va);
+        va0 = align_dn(va, PTE_SZ);
         pa0 = uva2ka(pgdir, (char*) va0);
 
         if (pa0 == 0) {
             return -1;
         }
 
-        n = PG_SIZE - (va - va0);
+        n = PTE_SZ - (va - va0);
 
         if (n > len) {
             n = len;
@@ -415,8 +432,21 @@ int copyout (pde_t *pgdir, uint va, void *p, uint len)
 
         len -= n;
         buf += n;
-        va = va0 + PG_SIZE;
+        va = va0 + PTE_SZ;
     }
 
     return 0;
+}
+
+
+// 1:1 map the memory [phy_low, phy_hi] in kernel. We need to
+// use 2-level mapping for this block of memory. The rumor has
+// it that ARMv6's small brain cannot handle the case that memory
+// be mapped in both 1-level page table and 2-level page. For
+// initial kernel, we use 1MB mapping, other memory needs to be
+// mapped as 4KB pages
+void paging_init (uint phy_low, uint phy_hi)
+{
+    mappages (P2V(&_kernel_pgtbl), P2V(phy_low), phy_hi - phy_low, phy_low, AP_KU);
+    flush_tlb ();
 }

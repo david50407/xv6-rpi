@@ -49,9 +49,9 @@ void freerange(void *vstart, void *vend)
 {
     char *p;
 
-    p = (char*)PG_UP((uint)vstart);
+    p = (char*)align_up (vstart, PTE_SZ);
 
-    for(; p + PG_SIZE <= (char*)vend; p += PG_SIZE) {
+    for(; p + PTE_SZ <= (char*)vend; p += PTE_SZ) {
         kfree(p);
     }
 }
@@ -65,22 +65,7 @@ void kfree(char *v)
 {
     struct run *r;
 
-    if((uint)v % PG_SIZE) {
-        cprintf("kfree1(0x%x)\n", v);
-        panic("kfree");
-    }
-
-    if(v < end) {
-        cprintf("kfree2(0x%x)\n", v);
-        panic("kfree");
-    }
-
-    if(v2p(v) >= PHYSTOP) {
-        cprintf("kfree3(0x%x)\n", v);
-        panic("kfree");
-    }
-
-    if((uint)v % PG_SIZE || v < end || v2p(v) >= PHYSTOP) {
+    if((uint)v % PTE_SZ || v < end || v2p(v) >= PHYSTOP) {
         cprintf("kfree(0x%x)\n", v);
         panic("kfree");
     }
