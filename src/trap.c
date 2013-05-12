@@ -27,36 +27,61 @@ void irq_handler (struct trapframe *r)
 // trap routine
 void reset_handler (struct trapframe *r)
 {
-    cprintf ("reset at: %d \n", r->pc);
-    while(1);
+    cli();
+    cprintf ("reset at: 0x%x \n", r->pc);
 }
 
 // trap routine
 void und_handler (struct trapframe *r)
 {
-    cprintf ("und at: %d \n", r->pc);
-    while(1);
+    cli();
+    cprintf ("und at: 0x%x \n", r->pc);
 }
 
 // trap routine
-void abort_handler (struct trapframe *r)
+void dabort_handler (struct trapframe *r)
 {
-    cprintf ("abort at: %d \n", r->pc);
-    while(1);
+    uint dfs, fa;
+
+    cli();
+
+    // read data fault status register
+    asm("MRC p15, 0, %[r], c5, c0, 0": [r]"=r" (dfs)::);
+
+    // read the fault address register
+    asm("MRC p15, 0, %[r], c6, c0, 0": [r]"=r" (fa)::);
+    
+    cprintf ("data abort: instruction 0x%x, fault addr 0x%x, reason 0x%x \n",
+             r->pc, fa, dfs);
+    
+    dump_trapframe (r);
+}
+
+// trap routine
+void iabort_handler (struct trapframe *r)
+{
+    uint ifs;
+    
+    // read fault status register
+    asm("MRC p15, 0, %[r], c5, c0, 0": [r]"=r" (ifs)::);
+
+    cli();
+    cprintf ("prefetch abort at: 0x%x (reason: 0x%x)\n", r->pc, ifs);
+    dump_trapframe (r);
 }
 
 // trap routine
 void na_handler (struct trapframe *r)
 {
-    cprintf ("n/a at: %d \n", r->pc);
-    while(1);
+    cli();
+    cprintf ("n/a at: 0x%x \n", r->pc);
 }
 
 // trap routine
 void fiq_handler (struct trapframe *r)
 {
-    cprintf ("fiq at: %d \n", r->pc);
-    while(1);
+    cli();
+    cprintf ("fiq at: 0x%x \n", r->pc);
 }
 
 // low-level init code: in real hardware, lower memory is usually mapped
@@ -86,8 +111,8 @@ void trap_init ( )
     ram_start[8]  = (uint32)trap_reset;
     ram_start[9]  = (uint32)trap_und;
     ram_start[10] = (uint32)trap_swi;
-    ram_start[11] = (uint32)trap_abort;
-    ram_start[12] = (uint32)trap_abort;
+    ram_start[11] = (uint32)trap_iabort;
+    ram_start[12] = (uint32)trap_dabort;
     ram_start[13] = (uint32)trap_na;
     ram_start[14] = (uint32)trap_irq;
     ram_start[15] = (uint32)trap_fiq;
@@ -106,20 +131,20 @@ void trap_init ( )
 
 void dump_trapframe (struct trapframe *tf)
 {
-    cprintf ("r14_svc: %d\n", tf->r14_svc);
-    cprintf ("spsr: %x\n", tf->spsr);
-    cprintf ("r0: %d\n", tf->r0);
-    cprintf ("r1: %d\n", tf->r1);
-    cprintf ("r2: %d\n", tf->r2);
-    cprintf ("r3: %d\n", tf->r3);
-    cprintf ("r4: %d\n", tf->r4);
-    cprintf ("r5: %d\n", tf->r5);
-    cprintf ("r6: %d\n", tf->r6);
-    cprintf ("r7: %d\n", tf->r7);
-    cprintf ("r8: %d\n", tf->r8);
-    cprintf ("r9: %d\n", tf->r9);
-    cprintf ("r10: %d\n", tf->r10);
-    cprintf ("r11: %d\n", tf->r11);
-    cprintf ("r12: %d\n", tf->r12);
-    cprintf ("pc: %d\n", tf->pc);
+    cprintf ("r14_svc: 0x%x\n", tf->r14_svc);
+    cprintf ("   spsr: 0x%x\n", tf->spsr);
+    cprintf ("     r0: 0x%x\n", tf->r0);
+    cprintf ("     r1: 0x%x\n", tf->r1);
+    cprintf ("     r2: 0x%x\n", tf->r2);
+    cprintf ("     r3: 0x%x\n", tf->r3);
+    cprintf ("     r4: 0x%x\n", tf->r4);
+    cprintf ("     r5: 0x%x\n", tf->r5);
+    cprintf ("     r6: 0x%x\n", tf->r6);
+    cprintf ("     r7: 0x%x\n", tf->r7);
+    cprintf ("     r8: 0x%x\n", tf->r8);
+    cprintf ("     r9: 0x%x\n", tf->r9);
+    cprintf ("    r10: 0x%x\n", tf->r10);
+    cprintf ("    r11: 0x%x\n", tf->r11);
+    cprintf ("    r12: 0x%x\n", tf->r12);
+    cprintf ("     pc: 0x%x\n", tf->pc);
 }

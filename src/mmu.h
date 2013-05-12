@@ -58,5 +58,6 @@
 
 #define PT_SZ       (NUM_PTE << 2)                  // user page table size (1K)
 #define PT_ADDR(v)  align_dn(v, PT_SZ)              // physical address of the PT
+#define PT_ORDER    10
 
 #endif

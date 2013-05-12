@@ -13,8 +13,10 @@ pde_t *kpgdir;  // for use in scheduler()
 
 // Xv6 can only allocate memory in 4KB blocks. This is fine
 // for x86. ARM's page table and page directory (for 28-bit
-// user address) have a size of 1KB. We use a simple allocation
-// scheme to manage it.
+// user address) have a size of 1KB. kpt_alloc/free is used
+// as a wrapper to support allocating page tables during boot
+// (use the initial kernel map, and during runtime, use buddy
+// memory allocator. 
 struct run {
     struct run *next;
 };
@@ -42,6 +44,11 @@ static void _kpt_free (char *v)
 
 static void kpt_free (char *v)
 {
+    if (v >= (char*)P2V(INIT_KERNMAP)) {
+        kfree(v, PT_ORDER);
+        return;
+    }
+    
     acquire(&kpt_mem.lock);
     _kpt_free (v);
     release(&kpt_mem.lock);
@@ -59,31 +66,19 @@ void kpt_freerange (uint32 low, uint32 hi)
 void* kpt_alloc (void)
 {
     struct run *r;
-    char *p;
-
+    
     acquire(&kpt_mem.lock);
-
-    r = kpt_mem.freelist;
-
-    // no cache of page tables, allocate a new page (4KB)
-    if (r == NULL ) {
-        p = alloc_page();
-
-        if (p == NULL ) {
-            panic("oom: kpt_alloc");
-        }
-
-        // only use the first 1K, release others to the pool
-        kpt_free(p + PT_SZ);
-        kpt_free(p + PT_SZ * 2);
-        kpt_free(p + PT_SZ * 3);
-
-        r = (struct run*) p;
-    } else {
+    
+    if ((r = kpt_mem.freelist) != NULL ) {
         kpt_mem.freelist = r->next;
     }
 
     release(&kpt_mem.lock);
+
+    // Allocate a PT page if no inital pages is available
+    if ((r == NULL) && ((r = kmalloc (PT_ORDER)) == NULL)) {
+        panic("oom: kpt_alloc");
+    }
 
     memset(r, 0, PT_SZ);
     return (char*) r;

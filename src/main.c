@@ -25,16 +25,14 @@ void kmain (void)
     // interrrupt vector table is in the middle of first 1MB. We use the left
     // over for page tables
     vectbl = P2V_WO (VEC_TBL & PDE_MASK);
+    
     init_vmm ();
     kpt_freerange (align_up(&end, PT_SZ), vectbl);
     kpt_freerange (vectbl + PT_SZ, P2V_WO(INIT_KERNMAP));
-
-    
     paging_init (INIT_KERNMAP, PHYSTOP);
     
     kmem_init ();
     kmem_init2(P2V(INIT_KERNMAP), P2V(PHYSTOP));
-    kmem_test_b ();
     
     trap_init ();				// vector table and stacks for models
     pic_init (P2V(VIC_BASE));	// interrupt controller
