@@ -8,7 +8,8 @@
 .global trap_irq
 .global trap_reset
 .global trap_und
-.global trap_abort
+.global trap_iabort
+.global trap_dabort
 .global trap_na
 .global trap_fiq
 .global trapret
@@ -79,31 +80,83 @@ trap_irq:
 # these handler does not allow nested handling
 trap_reset:
     MOV     r14, #0                 // lr: not defined on reset
-    STMFD   r13!, {r0-r3, r12, r14}
+    STMFD   r13!, {r0-r12, r14}
+    MRS     r2, spsr            // copy spsr to r2
+    STMFD   r13!, {r2}          // save r2(spsr) to the stack
+    STMFD   r13!, {r14}         // save r14 again (it is not really correct)
+    STMFD   r13, {sp, lr}^      // save user mode sp and lr
+    SUB     r13, r13, #8
+
+    # call traps (trapframe *fp)
+    MOV     r0, r13             // copy r13_svc to r0
     BL      reset_handler
-    LDMFD   r13!, {r0-r3, r12, pc}^
+    B       .
 
 trap_und:
-    STMFD   r13!, {r0-r3, r12, r14} // lr: instruction after the undefined
-    MOV     r0, r14
-    BL      und_handler
-    LDMFD   r13!, {r0-r3, r12, pc}^
+    STMFD   r13!, {r0-r12, r14} // lr: instruction after the undefined
+    MRS     r2, spsr                // copy spsr to r2
+    STMFD   r13!, {r2}              // save r2(spsr) to the stack
+    STMFD   r13!, {r14}             // save r14 again (it is not really correct)
+    STMFD   r13, {sp, lr}^          // save user mode sp and lr
+    SUB     r13, r13, #8
 
-trap_abort:
+    # call traps (trapframe *fp)
+    MOV     r0, r13                 // save trapframe as the first parameter
+    BL      und_handler
+    B       .
+
+trap_iabort:
+    SUB     r14, r14, #4            // lr: instruction causing the abort
+    STMFD   r13!, {r0-r12, r14}
+    MRS     r2, spsr                // copy spsr to r2
+    STMFD   r13!, {r2}              // save r2(spsr) to the stack
+    STMFD   r13!, {r14}             // save r14 again (it is not really correct)
+    STMFD   r13, {sp, lr}^          // save user mode sp and lr
+    SUB     r13, r13, #8
+
+    # call traps (trapframe *fp)
+    MOV     r0, r13                 // save trapframe as the first parameter
+    BL      iabort_handler
+    B       .
+
+trap_dabort:
     SUB     r14, r14, #8            // lr: instruction causing the abort
-    STMFD   r13!, {r0-r3, r12, r14}
-    MOV     r0, r14                 
-    BL      abort_handler
-    LDMFD   r13!, {r0-r3, r12, pc}^
+    STMFD   r13!, {r0-r12, r14}
+    MRS     r2, spsr                // copy spsr to r2
+    STMFD   r13!, {r2}              // save r2(spsr) to the stack
+    STMFD   r13!, {r14}             // save r14 again (it is not really correct)
+    STMFD   r13, {sp, lr}^          // save user mode sp and lr
+    SUB     r13, r13, #8
+
+    # call traps (trapframe *fp)
+    MOV     r0, r13                 // save trapframe as the first parameter
+    BL      dabort_handler
+    B       .
 
 trap_na:
-    STMFD   r13!, {r0-r3, r12, r14} // should never happen, hardware error
+    STMFD   r13!, {r0-r12, r14} // should never happen, hardware error
+    MRS     r2, spsr                // copy spsr to r2
+    STMFD   r13!, {r2}              // save r2(spsr) to the stack
+    STMFD   r13!, {r14}             // save r14 again (it is not really correct)
+    STMFD   r13, {sp, lr}^          // save user mode sp and lr
+    SUB     r13, r13, #8
+
+    # call traps (trapframe *fp)
+    MOV     r0, r13                 // save trapframe as the first parameter
     BL      na_handler
-    LDMFD   r13!, {r0-r3, r12, pc}^
+    B       .
 
 trap_fiq:
     SUB     r14, r14, #4            // lr: return address after the fiq handler
-    STMFD   r13!, {r0-r3, r12, r14}
+    STMFD   r13!, {r0-r12, r14}
+    MRS     r2, spsr                // copy spsr to r2
+    STMFD   r13!, {r2}              // save r2(spsr) to the stack
+    STMFD   r13!, {r14}             // save r14 again (it is not really correct)
+    STMFD   r13, {sp, lr}^          // save user mode sp and lr
+    SUB     r13, r13, #8
+
+    # call traps (trapframe *fp)
+    MOV     r0, r13                 // save trapframe as the first parameter
     BL      fiq_handler
-    LDMFD   r13!, {r0-r3, r12, pc}^
+    B       .
 
