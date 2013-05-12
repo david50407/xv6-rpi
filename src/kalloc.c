@@ -17,7 +17,7 @@ struct run {
     struct run *next;
 };
 
-struct {
+static struct {
     struct spinlock lock;
     int use_lock;
     struct run *freelist;

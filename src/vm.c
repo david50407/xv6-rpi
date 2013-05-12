@@ -67,7 +67,7 @@ void* kpt_alloc (void)
 
     // no cache of page tables, allocate a new page (4KB)
     if (r == NULL ) {
-        p = kalloc();
+        p = alloc_page();
 
         if (p == NULL ) {
             panic("oom: kpt_alloc");
@@ -191,7 +191,7 @@ void inituvm (pde_t *pgdir, char *init, uint sz)
         panic("inituvm: more than a page");
     }
 
-    mem = kalloc();
+    mem = alloc_page();
     memset(mem, 0, PTE_SZ);
     mappages(pgdir, 0, PTE_SZ, v2p(mem), AP_KU);
     memmove(mem, init, sz);
@@ -247,7 +247,7 @@ int allocuvm (pde_t *pgdir, uint oldsz, uint newsz)
     a = align_up(oldsz, PTE_SZ);
 
     for (; a < newsz; a += PTE_SZ) {
-        mem = kalloc();
+        mem = alloc_page();
 
         if (mem == 0) {
             cprintf("allocuvm out of memory\n");
@@ -291,7 +291,7 @@ int deallocuvm (pde_t *pgdir, uint oldsz, uint newsz)
                 panic("deallocuvm");
             }
 
-            kfree(p2v(pa));
+            free_page(p2v(pa));
             *pte = 0;
         }
     }
@@ -367,7 +367,7 @@ pde_t* copyuvm (pde_t *pgdir, uint sz)
         pa = PTE_ADDR (*pte);
         ap = PTE_AP (*pte);
 
-        if ((mem = kalloc()) == 0) {
+        if ((mem = alloc_page()) == 0) {
             goto bad;
         }
 

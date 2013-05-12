@@ -71,7 +71,7 @@ static struct proc* allocproc(void)
     release(&ptable.lock);
 
     // Allocate kernel stack.
-    if((p->kstack = kalloc()) == 0){
+    if((p->kstack = alloc_page ()) == 0){
         p->state = UNUSED;
         return 0;
     }
@@ -188,7 +188,7 @@ int fork(void)
 
     // Copy process state from p.
     if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
-        kfree(np->kstack);
+        free_page(np->kstack);
         np->kstack = 0;
         np->state = UNUSED;
         return -1;
@@ -285,7 +285,7 @@ int wait(void)
             if(p->state == ZOMBIE){
                 // Found one.
                 pid = p->pid;
-                kfree(p->kstack);
+                free_page(p->kstack);
                 p->kstack = 0;
                 freevm(p->pgdir);
                 p->state = UNUSED;

@@ -10,11 +10,11 @@ OBJS = \
 	arm.o\
 	asm.o\
 	bio.o\
+	buddy.o\
 	console.o\
 	exec.o\
 	file.o\
 	fs.o\
-	kalloc.o\
 	log.o\
 	main.o\
 	memide.o\

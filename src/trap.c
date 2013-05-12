@@ -94,7 +94,7 @@ void trap_init ( )
 
     // initialize the stacks for different mode
     for (i = 0; i < sizeof(modes)/sizeof(uint); i++) {
-        stk = kalloc ();
+        stk = alloc_page ();
 
         if (stk == NULL) {
             panic("failed to alloc memory for irq stack");

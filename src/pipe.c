@@ -29,7 +29,7 @@ int pipealloc(struct file **f0, struct file **f1)
         goto bad;
     }
 
-    if((p = (struct pipe*)kalloc()) == 0) {
+    if((p = kmalloc (get_order(sizeof(*p)))) == 0) {
         goto bad;
     }
 
@@ -54,7 +54,7 @@ int pipealloc(struct file **f0, struct file **f1)
     //PAGEBREAK: 20
     bad:
     if(p) {
-        kfree((char*)p);
+        kfree (p, get_order(sizeof*p));
     }
 
     if(*f0) {
@@ -83,7 +83,7 @@ void pipeclose(struct pipe *p, int writable)
 
     if(p->readopen == 0 && p->writeopen == 0){
         release(&p->lock);
-        kfree((char*)p);
+        kfree (p, get_order(sizeof(*p)));
 
     } else {
         release(&p->lock);

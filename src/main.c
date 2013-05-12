@@ -12,6 +12,8 @@ extern void* end;
 struct cpu	cpus[NCPU];
 struct cpu	*cpu;
 
+#define MB (1024*1024)
+
 void kmain (void)
 {
     uint vectbl;
@@ -27,11 +29,13 @@ void kmain (void)
     kpt_freerange (align_up(&end, PT_SZ), vectbl);
     kpt_freerange (vectbl + PT_SZ, P2V_WO(INIT_KERNMAP));
 
+    
     paging_init (INIT_KERNMAP, PHYSTOP);
-
+    
     kmem_init ();
-    kinit2(P2V(INIT_KERNMAP), P2V(PHYSTOP));
-
+    kmem_init2(P2V(INIT_KERNMAP), P2V(PHYSTOP));
+    kmem_test_b ();
+    
     trap_init ();				// vector table and stacks for models
     pic_init (P2V(VIC_BASE));	// interrupt controller
     uart_enable_rx ();			// interrupt for uart
