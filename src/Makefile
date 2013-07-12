@@ -7,6 +7,8 @@ include makefile.inc
 LIBS = $(LIBGCC)
 
 OBJS = \
+	lib/string.o \
+	\
 	arm.o\
 	asm.o\
 	bio.o\
@@ -18,22 +20,22 @@ OBJS = \
 	log.o\
 	main.o\
 	memide.o\
-	picirq.o\
 	pipe.o\
 	proc.o\
 	spinlock.o\
 	start.o\
-	string.o\
 	swtch.o\
 	syscall.o\
 	sysfile.o\
 	sysproc.o\
-	timer.o\
 	trap_asm.o\
 	trap.o\
-	uart.o\
-	vm.o
-	
+	vm.o \
+	\
+	device/picirq.o \
+	device/timer.o \
+	device/uart.o
+
 kernel.elf: $(OBJS) entry.o kernel.ld initcode fs.img
 	$(LD) $(LDFLAGS) -T kernel.ld -o kernel.elf entry.o $(OBJS) $(LIBS) -b binary initcode fs.img
 	$(OBJDUMP) -S kernel.elf > kernel.asm

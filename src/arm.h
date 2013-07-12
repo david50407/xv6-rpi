@@ -1,7 +1,7 @@
 #ifndef ARM_INCLUDE
 #define ARM_INCLUDE
 
-#include "versatile_pb.h"
+#include "device/versatile_pb.h"
 
 // trap frame: in ARM, there are seven modes. Among the 16 regular registers,
 // r13 (sp), r14(lr), r15(pc) are banked in all modes.
