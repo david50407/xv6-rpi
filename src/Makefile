@@ -36,27 +36,37 @@ OBJS = \
 	device/timer.o \
 	device/uart.o
 
-kernel.elf: $(OBJS) entry.o kernel.ld initcode fs.img
-	$(LD) $(LDFLAGS) -T kernel.ld -o kernel.elf entry.o $(OBJS) $(LIBS) -b binary initcode fs.img
+KERN_OBJS = $(OBJS) entry.o
+kernel.elf: $(addprefix build/,$(KERN_OBJS)) kernel.ld build/initcode build/fs.img
+	cp -f build/initcode initcode
+	cp -f build/fs.img fs.img
+	$(call LINK_BIN, kernel.ld, kernel.elf, \
+		$(addprefix build/,$(KERN_OBJS)), \
+		initcode fs.img)
 	$(OBJDUMP) -S kernel.elf > kernel.asm
 	$(OBJDUMP) -t kernel.elf | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
+	rm -f initcode fs.img
 
 qemu: kernel.elf
 	$(QEMU) -M versatilepb -m 128 -cpu arm1176  -nographic -kernel kernel.elf
 
-#initcode is linked into the kernel, it will be used to craft the first process
-initcode: initcode.S
-	$(CC) $(CFLAGS) -nostdinc -I. -c initcode.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o initcode.out initcode.o
-	$(OBJCOPY) -S -O binary initcode.out initcode
-	$(OBJDUMP) -S initcode.o > initcode.asm
+INITCODE_OBJ = initcode.o
+$(addprefix build/,$(INITCODE_OBJ)): initcode.S
+	$(call build-directory)
+	$(call AS_WITH, -nostdinc -I.)
 
-fs.img:
+#initcode is linked into the kernel, it will be used to craft the first process
+build/initcode: $(addprefix build/,$(INITCODE_OBJ))
+	$(call LINK_INIT, -N -e start -Ttext 0)
+	$(call OBJCOPY_INIT)
+	$(OBJDUMP) -S $< > initcode.asm
+
+build/fs.img:
 	make -C tools
 	make -C usr
-	cp usr/fs.img fs.img
 
 clean: 
+	rm -rf build
 	rm -f *.o *.d *.asm *.sym vectors.S bootblock entryother \
 	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs
 	make -C tools clean

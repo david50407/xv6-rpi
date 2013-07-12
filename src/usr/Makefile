@@ -5,6 +5,7 @@ ASFLAGS += -I ../
 ULIB = ulib.o usys.o printf.o umalloc.o
 
 MKFS = ../tools/mkfs
+FS_IMAGE = ../build/fs.img
 
 UPROGS=\
 	_cat\
@@ -23,7 +24,7 @@ UPROGS=\
 	_zombie\
 
 
-all: fs.img
+all: $(FS_IMAGE)
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^  -L ../ $(LIBGCC)
@@ -36,13 +37,11 @@ _forktest: forktest.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
 	$(OBJDUMP) -S _forktest > forktest.asm
 
-fs.img: $(MKFS)  $(UPROGS)
-	$(MKFS) fs.img  $(UPROGS) UNIX
+$(FS_IMAGE): $(MKFS)  $(UPROGS)
+	$(MKFS) $@  $(UPROGS) UNIX
 	$(OBJDUMP) -S usys.o > usys.asm
 
 clean: 
-	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-	*.o *.d *.asm *.sym vectors.S bootblock entryother \
-	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs \
+	rm -f *.o *.d *.asm *.sym $(FS_IMAGE) \
 	.gdbinit \
 	$(UPROGS)

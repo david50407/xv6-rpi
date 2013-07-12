@@ -11,19 +11,19 @@ SECTIONS
    run in this initial setting.*/
   . = 0x10000;
   .start_sec : {
-    entry.o(.text)
-    start.o(.text .text.*)
+    build/entry.o(.text)
+    build/start.o(.text .text.*)
 
-    entry.o(.rodata .rodata.*)
-    start.o(.rodata .rodata.*)
+    build/entry.o(.rodata .rodata.*)
+    build/start.o(.rodata .rodata.*)
 
-    entry.o(.data .data.*)
-    start.o(.data .data.*)
+    build/entry.o(.data .data.*)
+    build/start.o(.data .data.*)
 
     PROVIDE(edata_entry = .);
 
-    entry.o(.bss .bss.* COMMON)
-    start.o(.bss .bss.* COMMON)
+    build/entry.o(.bss .bss.* COMMON)
+    build/start.o(.bss .bss.* COMMON)
 
     /*define a stack for the entry*/
     . = ALIGN(0x1000);
