@@ -12,3 +12,10 @@ LDFLAGS = -L.
 ASFLAGS = -march=armv6 
 
 LIBGCC = $(shell $(CC) -print-libgcc-file-name)
+
+# host compiler
+HOSTCC_preferred = gcc
+define get_hostcc
+    $(if $(shell which $(HOSTCC_preferred)),$(HOSTCC_preferred),"cc")
+endef
+HOSTCC := $(call get_hostcc)
