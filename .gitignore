@@ -10,4 +10,4 @@
 src/initcode
 
 # tools
-src/usr/mkfs
+src/tools/mkfs
