@@ -51,11 +51,13 @@ initcode: initcode.S
 	$(OBJCOPY) -S -O binary initcode.out initcode
 	$(OBJDUMP) -S initcode.o > initcode.asm
 
-fs.img: 
+fs.img:
+	make -C tools
 	make -C usr
 	cp usr/fs.img fs.img
 
 clean: 
 	rm -f *.o *.d *.asm *.sym vectors.S bootblock entryother \
-	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs mkfs
+	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs
+	make -C tools clean
 	make -C usr clean

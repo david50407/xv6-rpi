@@ -4,6 +4,8 @@ CFLAGS += -iquote ../
 ASFLAGS += -I ../
 ULIB = ulib.o usys.o printf.o umalloc.o
 
+MKFS = ../tools/mkfs
+
 UPROGS=\
 	_cat\
 	_echo\
@@ -23,9 +25,6 @@ UPROGS=\
 
 all: fs.img
 
-mkfs: mkfs.c
-	gcc -Werror -Wall -iquote ../ -o mkfs mkfs.c
-
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^  -L ../ $(LIBGCC)
 	$(OBJDUMP) -S $@ > $*.asm
@@ -37,13 +36,13 @@ _forktest: forktest.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o _forktest forktest.o ulib.o usys.o
 	$(OBJDUMP) -S _forktest > forktest.asm
 
-fs.img: mkfs  $(UPROGS)
-	./mkfs fs.img  $(UPROGS) UNIX
+fs.img: $(MKFS)  $(UPROGS)
+	$(MKFS) fs.img  $(UPROGS) UNIX
 	$(OBJDUMP) -S usys.o > usys.asm
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*.o *.d *.asm *.sym vectors.S bootblock entryother \
-	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs mkfs \
+	initcode initcode.out kernel xv6.img fs.img kernel.elf memfs \
 	.gdbinit \
 	$(UPROGS)
