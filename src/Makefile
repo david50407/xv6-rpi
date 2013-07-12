@@ -4,7 +4,7 @@ QEMU = qemu-system-arm
 include makefile.inc
 
 # link the libgcc.a for __aeabi_idiv. ARM has no native support for div
-LIBS=-lgcc
+LIBS = $(LIBGCC)
 
 OBJS = \
 	arm.o\

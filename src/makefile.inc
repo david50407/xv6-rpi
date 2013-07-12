@@ -10,3 +10,4 @@ CFLAGS = -march=armv6 -fno-pic -static -fno-builtin -fno-strict-aliasing -Wall -
 LDFLAGS = -L.
 ASFLAGS = -march=armv6 
 
+LIBGCC = $(shell $(CC) -print-libgcc-file-name)

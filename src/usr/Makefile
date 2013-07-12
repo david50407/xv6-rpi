@@ -27,7 +27,7 @@ mkfs: mkfs.c
 	gcc -Werror -Wall -iquote ../ -o mkfs mkfs.c
 
 _%: %.o $(ULIB)
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^  -L ../ -lgcc
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^  -L ../ $(LIBGCC)
 	$(OBJDUMP) -S $@ > $*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
 
