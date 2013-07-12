@@ -48,6 +48,8 @@ kernel.elf: $(addprefix build/,$(KERN_OBJS)) kernel.ld build/initcode build/fs.i
 	rm -f initcode fs.img
 
 qemu: kernel.elf
+	@clear
+	@echo "Press Ctrl-A and then X to terminate QEMU session\n"
 	$(QEMU) -M versatilepb -m 128 -cpu arm1176  -nographic -kernel kernel.elf
 
 INITCODE_OBJ = initcode.o
