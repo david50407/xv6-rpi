@@ -1,0 +1,13 @@
+# generated files
+*.o
+*.elf
+*.sym
+*.img
+*.out
+*.asm
+
+# image files
+src/initcode
+
+# tools
+src/usr/mkfs
