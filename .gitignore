@@ -5,9 +5,18 @@
 *.img
 *.out
 *.asm
+src/usr/_*
+src/build/
 
 # image files
 src/initcode
 
 # tools
 src/tools/mkfs
+
+# vim swaps
+.*.swp
+*.swp
+
+# toolchains
+toolchain/

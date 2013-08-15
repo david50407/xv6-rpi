@@ -23,7 +23,10 @@ forktest(void)
     for(n=0; n<N; n++){
         pid = fork();
         if(pid < 0)
+				{
+						printf(1, "fork failed!\n");
             break;
+				}
         if(pid == 0)
             exit();
     }

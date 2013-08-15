@@ -22,6 +22,8 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
+	_hello\
+	_forktest\
 
 
 all: $(FS_IMAGE)
