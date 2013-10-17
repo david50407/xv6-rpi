@@ -11,7 +11,7 @@ The original xv6 is implemented for the x86 architecture. This is an effort to p
 Debug
 -------
 1. use QEMU to dump a execution trace
-`qemu-system-arm -M versatilepb -m 128 -cpu arm1176  -nographic -singlestep \
+`qemu-system-arm -M versatilepb -m 128 -cpu arm1176  -nographic -singlestep \\
 		-d exec,cpu,guest_errors -D qemu.log -kernel kernel.elf`
 
 2. insert `show_callstk` in the kernel to dump current call stacks.
