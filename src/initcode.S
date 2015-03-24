@@ -2,7 +2,7 @@
 
 #include "syscall.h"
 
-.globl start
+.global start
 
 # exec(init, argv)
 start:
