@@ -8,8 +8,12 @@
 // trap routine
 void swi_handler (struct trapframe *r)
 {
+    if (proc->killed)
+        exit();
     proc->tf = r;
     syscall ();
+    if (proc->killed)
+        exit();
 }
 
 // trap routine
