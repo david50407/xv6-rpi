@@ -523,7 +523,7 @@ void procdump(void)
             state = "???";
         }
 
-        cprintf("%d %s %s\n", p->pid, state, p->name);
+        cprintf("%d %s %d:%s %d\n", p->pid, state, p->pid, p->name, p->parent->pid);
     }
 
     show_callstk("procdump: \n");

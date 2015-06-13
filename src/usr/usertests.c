@@ -207,6 +207,7 @@ pipe1(void)
     int fds[2], pid;
     int seq, i, n, cc, total;
     
+		printf(1, "pipe test\n");
     if(pipe(fds) != 0){
         printf(1, "pipe() failed\n");
         exit();
@@ -333,6 +334,7 @@ mem(void)
     ppid = getpid();
     if((pid = fork()) == 0){
         m1 = 0;
+        printf(1, "mem test alloc to full\n");
         while((m2 = malloc(10001)) != 0){
             *(char**)m2 = m1;
             m1 = m2;
@@ -342,6 +344,7 @@ mem(void)
             free(m1);
             m1 = m2;
         }
+        printf(1, "mem test alloc to full ok\n");
         m1 = malloc(1024*20);
         if(m1 == 0){
             printf(1, "couldn't allocate mem?!!\n");
@@ -351,6 +354,8 @@ mem(void)
         free(m1);
         printf(1, "mem ok\n");
         exit();
+    } else if (pid < 0) {
+        printf(1, "fork failed!\n");
     } else {
         wait();
     }
